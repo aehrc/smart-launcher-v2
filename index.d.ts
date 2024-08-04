@@ -1,4 +1,7 @@
 import { Request } from "express-serve-static-core"
+import { Identifier as R2Identifier } from "fhir/r2"
+import { Identifier as R3Identifier } from "fhir/r3"
+import { Identifier as R4Identifier } from "fhir/r4"
 
 declare global {
     var ENV: {
@@ -69,6 +72,7 @@ declare namespace SMART {
         jwks?: string
         pkce?: PKCEValidation
         client_type?: SMARTClientType
+        fhir_context?: string;
     }
 
     interface AuthorizeParams {
@@ -330,18 +334,30 @@ declare namespace SMART {
          */
         tenant?: string
 
+
         /**
          * Array of relative resource References to any resource type other than
          * “Patient” or “Encounter”. It is not prohibited to have more than one
          * Reference to a given type of resource.
          */
-        fhirContext?: string[]
+        fhirContext?: FhirContext[];
 
         /**
          * Simulated error to throw
          * @PROPRIETARY
          */
         sim_error?: string
+    }
+
+    /**
+     * FhirContext interface as of https://jira.hl7.org/browse/FHIR-41279
+     */
+    interface FhirContext {
+        reference?: string;
+        role?: string;
+        canonical?: string;
+        type?: string;
+        identifier?: R2Identifier | R3Identifier | R4Identifier;
     }
 
     /**

@@ -18,6 +18,7 @@ import {
     InvalidScopeError,
     OAuthError
 } from "../../errors"
+import FhirContext = SMART.FhirContext;
 
 
 export interface AuthorizeParams {
@@ -382,6 +383,30 @@ export default class AuthorizeHandler {
             }
         }
 
+        // fhirContext
+        if (launchOptions.fhir_context.size() > 0) {
+            const fhirContexts: FhirContext[] = [];
+            for (const fhirContext of launchOptions.fhir_context.toJSON()) {
+                try {
+                    fhirContexts.push(JSON.parse(fhirContext));
+                } catch {}
+            }
+
+            // If "launch" scope is present, add all fhirContexts
+            if (scope.has("launch")) {
+                code.context.fhirContext = fhirContexts;
+            } else {
+                // TODO support all resources - currently only supporting questionnaire
+                // Otherwise, add fhirContexts based on launch/+ scopes provided
+                if (scope.has("launch/questionnaire")) {
+                    code.context.fhirContext = fhirContexts.filter((fhirContext) =>
+                        fhirContext.reference?.startsWith("Questionnaire/")
+                    );
+                }
+            }
+        }
+
+
         // user
         if (scope.has("openid") && (scope.has("profile") || scope.has("fhirUser"))) {
             
@@ -453,7 +478,6 @@ export default class AuthorizeHandler {
         }
 
         if (launchOptions.pkce !== "none") {
-
             // code_challenge_method must be 'S256' if set
             if ((params.code_challenge_method || launchOptions.pkce === "always") && params.code_challenge_method !== 'S256') {
                 throw new InvalidRequestError("Invalid code_challenge_method. Must be S256.")
@@ -569,9 +593,9 @@ export default class AuthorizeHandler {
         }
 
         // ENCOUNTER
-        if (this.needToPickEncounter()) {
-            return this.renderEncounterPicker()
-        }
+        // if (this.needToPickEncounter()) {
+        //     return this.renderEncounterPicker()
+        // }
 
         // AUTH SCREEN
         if (this.needToAuthorize()) {
