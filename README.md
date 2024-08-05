@@ -3,15 +3,15 @@
 ## Fork Overview
 This fork of the SMART Launcher has been slightly modified to be used as a proxy that enables SMART App Launch on top of a vanilla FHIR server.
 
-It was used to support the launching of [Smart Forms](https://github.com/aehrc/smart-forms), a FHIR questionnaire rendering SMART app from a [EHR simulator](https://github.com/aehrc/smart-ehr-launcher) for demo and testing purposes.
+It was used to support the launching of [Smart Forms](https://github.com/aehrc/smart-forms), a FHIR questionnaire rendering SMART app from a [EHR simulator](https://github.com/aehrc/SMART-EHR-Launcher/tree/dev) for demo and testing purposes.
 Leveraging the existing internals of the SMART Launcher provides a way to indirectly enable the SMART App Launch functionality on top of any FHIR server, notably [HAPI](https://github.com/hapifhir/hapi-fhir-jpaserver-starter) in Smart Form's use case.
 
 This proxy component is only tested on open servers so far, and it is not guaranteed to work with servers that require authorisation.
 
-A live demo app is available at: https://ehr.smartforms.io
+A live demo app is available at: https://dev.ehr.smartforms.io
 
 ### Fork changes
-- Removed the frontend portion of the launcher, moving it to the [Smart EHR Launcher project](https://github.com/aehrc/smart-ehr-launcher)
+- Removed the frontend portion of the launcher, moving it to the [Smart EHR Launcher project](https://github.com/aehrc/SMART-EHR-Launcher/tree/dev)
 - Enabled support for the [fhirContext](https://build.fhir.org/ig/HL7/smart-app-launch/scopes-and-launch-context.html#fhircontext-exp) launch context, mainly to facilitate a questionnaire launch context for Smart Forms.
 - Bug fixes for POSTing JSON payloads to the source FHIR server
 
@@ -46,10 +46,10 @@ docker run -p 8080:80 smartonfhir/smart-launcher-2:latest
 
 The SMART Launcher project comes with a frontend to configure and launch SMART apps. 
 
-This fork removes the frontend and moves it to the Smart EHR Launcher project (https://github.com/aehrc/smart-ehr-launcher), which acts as a minimal EHR to display a Patient summary and it's associated resources while retaining its app-launching capabilities.
+This fork removes the frontend and moves it to the Smart EHR Launcher project (https://github.com/aehrc/SMART-EHR-Launcher/tree/dev), which acts as a minimal EHR to display a Patient summary and it's associated resources while retaining its app-launching capabilities.
 
-The SMART EHR Launcher is a single-page application (SPA) built with React and [Vite](https://vitejs.dev/).
-If you are planning to use the SMART EHR Launcher as the frontend, you will need to make an additional SPA deployment and configure it to point to the proxy server. See [here](https://github.com/aehrc/SMART-EHR-Launcher/blob/main/README.md) for more details.
+The Smart EHR Launcher is a single-page application (SPA) built with React and [Vite](https://vitejs.dev/).
+If you are planning to use the Smart EHR Launcher as the frontend, you will need to make an additional SPA deployment and configure it to point to the proxy server. See [here](https://github.com/aehrc/SMART-EHR-Launcher/blob/dev/README.md) for more details.
 
 <br/>
 

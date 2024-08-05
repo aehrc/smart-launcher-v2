@@ -75,6 +75,9 @@ export class DeploymentStack extends cdk.Stack {
       containerName: containerName,
       image: ContainerImage.fromRegistry("aehrc/smart-launcher-v2:latest"),
       portMappings: [{ containerPort: containerPort }],
+      environment: {
+        FHIR_SERVER_R4: 'https://proxy.smartforms.io/fhir',
+      }
     });
     const smartProxyService = new FargateService(this, "CsiroSmartProxyService", {
       cluster,
