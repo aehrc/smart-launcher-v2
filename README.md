@@ -49,7 +49,7 @@ The SMART Launcher project comes with a frontend to configure and launch SMART a
 This fork removes the frontend and moves it to the Smart EHR Launcher project (https://github.com/aehrc/SMART-EHR-Launcher), which acts as a minimal EHR to display a Patient summary and it's associated resources while retaining its app-launching capabilities.
 
 The Smart EHR Launcher is a single-page application (SPA) built with React and [Vite](https://vitejs.dev/).
-If you are planning to use the Smart EHR Launcher as the frontend, you will need to make an additional SPA deployment and configure it to point to the proxy server. See [here](https://github.com/aehrc/SMART-EHR-Launcher/README.md) for more details.
+If you are planning to use the Smart EHR Launcher as the frontend, you will need to make an additional SPA deployment and configure it to point to the proxy server. See [here](https://github.com/aehrc/SMART-EHR-Launcher/blob/main/README.md) for more details.
 
 <br/>
 
