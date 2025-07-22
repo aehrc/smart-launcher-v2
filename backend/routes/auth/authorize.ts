@@ -396,14 +396,33 @@ export default class AuthorizeHandler {
             if (scope.has("launch")) {
                 code.context.fhirContext = fhirContexts;
             } else {
-                // TODO support all resources - currently only supporting questionnaire
-                // Otherwise, add fhirContexts based on launch/+ scopes provided
-                if (scope.has("launch/questionnaire")) {
+                // Use Australian Digital Health namespace with the "new" role for fhirContext:
+                // https://confluence.hl7.org/spaces/FHIRI/pages/202409650/fhirContext+Role+Registry#:~:text=N/A-,http%3A//ns.electronichealth.net.au/smart/role/new,-URL%20made%20more
+                if (scope.has("launch/questionnaire?role=http://ns.electronichealth.net.au/smart/role/new")) {
                     code.context.fhirContext = fhirContexts.filter((fhirContext) =>
-                        fhirContext.reference?.startsWith("Questionnaire/")
+                        fhirContext.role === "http://ns.electronichealth.net.au/smart/role/new" &&
+                        fhirContext.type === "Questionnaire" &&
+                        !!fhirContext.canonical
+                    );
+                }
+
+                /* AusCVDRisk-i role
+                {
+                  "role": "https://smartforms.csiro.au/ig/smart/role/launch-aus-cvd-risk-i",
+                  "type": "Endpoint",
+                  "reference": "Endpoint/456"
+                }
+                */
+                if (scope.has("launch/questionnaire?role=https://smartforms.csiro.au/ig/smart/role/launch-aus-cvd-risk-i")) {
+                    code.context.fhirContext = fhirContexts.filter((fhirContext) =>
+                        fhirContext.role === "https://smartforms.csiro.au/ig/smart/role/launch-aus-cvd-risk-i" &&
+                        fhirContext.type === "Endpoint" &&
+                        !!fhirContext.reference
                     );
                 }
             }
+          // console.log(launchOptions.fhir_context)
+          // console.log(code.context.fhirContext)
         }
 
 

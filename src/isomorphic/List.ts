@@ -119,8 +119,20 @@ export default class List
         if (Array.isArray(items)) {
             this._arr = items.filter(Boolean);
         } else {
-            const regex = /\{.*?\}/g;
-            this._arr = Array.from(items.match(regex) ?? [])
+            try {
+                // Try to parse as JSON array first i.e. [{fhirContext1_obj_1},{fhirContext1_obj_2}]
+                const parsed = JSON.parse(items);
+                if (Array.isArray(parsed)) {
+                    this._arr = parsed.map(item => typeof item === 'string' ? item : JSON.stringify(item)).filter(Boolean);
+                } else {
+                    // Single object, wrap in array
+                    this._arr = [JSON.stringify(parsed)];
+                }
+            } catch {
+                // Fallback to regex parsing for a comma separated string i.e. {fhirContext1_obj_1},{fhirContext1_obj_2}
+                const regex = /\{.*?\}/g;
+                this._arr = Array.from(items.match(regex) ?? []);
+            }
         }
         return this;
     }
