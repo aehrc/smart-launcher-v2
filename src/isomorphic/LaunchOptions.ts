@@ -68,7 +68,8 @@ export default class LaunchOptions
 
     fhir_context: List = new List();
 
-    
+    additional_context: string = "";
+
     constructor(input: string | SMART.LaunchParams)
     {
         if (typeof input === "string") {
@@ -92,6 +93,7 @@ export default class LaunchOptions
         this.provider.set(input.provider || "");
         this.patient.set(input.patient  || "");
         this.fhir_context.setFhirContext(input.fhir_context || "");
+        this.additional_context = input.additional_context || "";
     }
 
     public toString(): string
@@ -117,7 +119,8 @@ export default class LaunchOptions
             jwks_url     : this.jwks_url,
             jwks         : this.jwks,
             client_type  : this.client_type,
-            pkce         : this.pkce
+            pkce         : this.pkce,
+            additional_context: this.additional_context
         }
     }
 }

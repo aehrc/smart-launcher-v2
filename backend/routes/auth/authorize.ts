@@ -426,6 +426,19 @@ export default class AuthorizeHandler {
             }
         }
 
+        // additional_context — add after all standard context is set, skip any already-initialised keys
+        if (launchOptions.additional_context) {
+            try {
+                const entries: { key: string; value: string }[] = JSON.parse(launchOptions.additional_context);
+                const ctx = code.context as Record<string, unknown>;
+                for (const { key, value } of entries) {
+                    if (key && !(key in ctx)) {
+                        ctx[key] = value;
+                    }
+                }
+            } catch {}
+        }
+
         return jwt.sign(code, config.jwtSecret, { expiresIn: "5m" });
     }
 

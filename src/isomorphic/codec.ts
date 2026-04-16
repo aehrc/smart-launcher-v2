@@ -128,6 +128,7 @@ export function decode(launch: string): SMART.LaunchParams {
         client_type  : clientTypes[arr[14]],
         pkce         : PKCEValidationTypes[arr[15]],
         fhir_context: arr[16] || "",
+        additional_context: arr[19] || "",
     }
 }
 
