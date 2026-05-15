@@ -113,6 +113,17 @@ export default class ScopeSet
                 return grantedScopes.push(requestedScope);
             }
 
+            // Launch context scopes (e.g. launch/questionnaire?role=...) are not
+            // resource scopes. Grant them if the base scope (without query params)
+            // is in the allowed set.
+            if (requestedScope.startsWith("launch/")) {
+                const baseScope = requestedScope.split("?")[0];
+                if (this.has(baseScope)) {
+                    return grantedScopes.push(requestedScope);
+                }
+                return rejectedScopes.push(requestedScope);
+            }
+
             // For resource access scope try smarter approach
             if (requestedScope.includes("/") && requestedScope.includes(".")) {
                 const scope = new Scope(requestedScope);

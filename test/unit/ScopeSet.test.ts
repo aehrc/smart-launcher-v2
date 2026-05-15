@@ -69,6 +69,33 @@ describe("ScopeSet", () => {
         });
     });
 
+    describe('negotiate()', () => {
+        it('grants launch/ scopes with query params when base scope is allowed', () => {
+            const allowed = new ScopeSet('launch/questionnaire patient/Patient.r');
+            const { grantedScopes, rejectedScopes } = allowed.negotiate(
+                'launch/questionnaire?role=http://ns.electronichealth.net.au/smart/role/new patient/Patient.r'
+            );
+            expect(grantedScopes).to.include('launch/questionnaire?role=http://ns.electronichealth.net.au/smart/role/new');
+            expect(grantedScopes).to.include('patient/Patient.r');
+            expect(rejectedScopes).to.deep.equal([]);
+        });
+
+        it('rejects launch/ scopes with query params when base scope is not allowed', () => {
+            const allowed = new ScopeSet('launch/patient patient/Patient.r');
+            const { grantedScopes, rejectedScopes } = allowed.negotiate(
+                'launch/questionnaire?role=http://ns.electronichealth.net.au/smart/role/new'
+            );
+            expect(grantedScopes).to.deep.equal([]);
+            expect(rejectedScopes).to.include('launch/questionnaire?role=http://ns.electronichealth.net.au/smart/role/new');
+        });
+
+        it('grants launch/ scopes without query params via direct match', () => {
+            const allowed = new ScopeSet('launch/questionnaire launch/patient');
+            const { grantedScopes } = allowed.negotiate('launch/questionnaire');
+            expect(grantedScopes).to.include('launch/questionnaire');
+        });
+    });
+
     describe('getInvalidSystemScopes()', () => {
         it('with a valid scopes', () => {
             expect(ScopeSet.getInvalidSystemScopes("system/Client.read")).to.equal('');
