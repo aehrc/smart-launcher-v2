@@ -2,11 +2,11 @@ import crypto                from "crypto"
 import { Request, Response } from "express"
 import jwt, { JwtHeader }    from "jsonwebtoken"
 import jose                  from "node-jose"
-import fetch                 from "cross-fetch"
 import { SMART }             from "../../.."
 import config                from "../../config"
 import ScopeSet              from "../../../src/isomorphic/ScopeSet"
 import { decode }            from "../../../src/isomorphic/codec"
+import { guardedFetch }      from "../../outboundFetch"
 import {
     getRequestBaseURL,
     requireUrlencodedPost
@@ -382,12 +382,20 @@ export default class TokenHandler {
 
     protected async fetchJwks(url: string): Promise<SMART.JWKS> {
         try {
-            const res = await fetch(url, { headers: { accept: "application/json" } })
+            const res = await guardedFetch(url, { headers: { accept: "application/json" } })
             if (!res.ok) {
                 throw new Error(res.status + " " + res.statusText)
             }
             return await res.json();
         } catch (ex) {
+            // Do not echo low-level details (such as resolved addresses) for
+            // URLs that are refused by the outbound address check
+            if ((ex as any)?.code === "ERR_BLOCKED_URL") {
+                throw new InvalidClientError(
+                    "Failed to fetch JWKS from %s. The JWKS URL must use http or https and resolve to a public address.",
+                    url
+                ).status(401)
+            }
             throw new InvalidClientError("Failed to fetch JWKS from %s. %s", url, (ex as Error).message).status(401)
         }
     }

@@ -18,8 +18,13 @@ A live demo app is available at: https://ehr.smartforms.io
 If you don't need the above changes, you can use the original SMART Launcher project as is here: https://github.com/smart-on-fhir/smart-launcher-v2.
 
 ### Environment Configuration + Docker deployment
-The fork made zero changes to the environment configuration, but it would be worth highlighting that at least one of `FHIR_SERVER_R2`, `FHIR_SERVER_R3` or `FHIR_SERVER_R4` must be set in the `.env` file.
+The fork adds one environment setting, `ALLOW_PRIVATE_JWKS_URLS` (see below). It would be worth highlighting that at least one of `FHIR_SERVER_R2`, `FHIR_SERVER_R3` or `FHIR_SERVER_R4` must be set in the `.env` file.
 Otherwise, all servers will default to SMART Health IT's servers.
+
+#### Client JWKS URLs
+For asymmetric client authentication and backend services, the token endpoint fetches the client's JWKS from the `jwks_url` launch option. That URL must use `http` or `https` and every address its host resolves to must be public. Loopback, unspecified, private, link-local (including cloud metadata), unique-local IPv6, CGNAT, multicast, broadcast and reserved addresses are refused, as are IPv6 forms that embed them. The check runs when the connection is made, and redirects are followed only to URLs that pass the same check. A refused URL results in a 401 `invalid_client` response.
+
+To use a JWKS URL on a local or private network during development, set `ALLOW_PRIVATE_JWKS_URLS=true`. Do not enable it on a hosted instance. The FHIR server settings (`FHIR_SERVER_R2`, `FHIR_SERVER_R3`, `FHIR_SERVER_R4` and their `_INTERNAL` overrides) are operator-controlled and are not affected.
 
 #### Example docker usages:
 

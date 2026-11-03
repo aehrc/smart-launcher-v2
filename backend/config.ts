@@ -51,6 +51,13 @@ export default {
     supportedAlgorithms: ["RS256", "RS384", "RS512", "ES256", "ES384", "ES512"],
 
     /**
+     * Allow client JWKS URLs that resolve to loopback, private, link-local or
+     * other non-public addresses. Off unless ALLOW_PRIVATE_JWKS_URLS is
+     * exactly "true". Intended for local development only.
+     */
+    allowPrivateJwksUrls: env.ALLOW_PRIVATE_JWKS_URLS === "true",
+
+    /**
      * Whether to include encounter in standalone launch context. Note that if
      * this is false, encounter will not be included even if "launch/encounter"
      * scope is requested
