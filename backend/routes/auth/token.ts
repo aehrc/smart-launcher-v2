@@ -2,11 +2,11 @@ import crypto                from "crypto"
 import { Request, Response } from "express"
 import jwt, { JwtHeader }    from "jsonwebtoken"
 import jose                  from "node-jose"
-import fetch                 from "cross-fetch"
 import { SMART }             from "../../.."
 import config                from "../../config"
 import ScopeSet              from "../../../src/isomorphic/ScopeSet"
 import { decode }            from "../../../src/isomorphic/codec"
+import { guardedFetch }      from "../../outboundFetch"
 import {
     getRequestBaseURL,
     requireUrlencodedPost
@@ -380,15 +380,37 @@ export default class TokenHandler {
         }
     }
 
+    /**
+     * Fetches the client JWKS. Failures are reported to the client with a
+     * generic message (and the HTTP status when there is one); the underlying
+     * error is only written to the server log, so that responses do not reveal
+     * resolved addresses, network errors or response content.
+     */
     protected async fetchJwks(url: string): Promise<SMART.JWKS> {
+        let res: Awaited<ReturnType<typeof guardedFetch>>
         try {
-            const res = await fetch(url, { headers: { accept: "application/json" } })
-            if (!res.ok) {
-                throw new Error(res.status + " " + res.statusText)
+            res = await guardedFetch(url, { headers: { accept: "application/json" } })
+        } catch (ex) {
+            console.error("Failed to fetch JWKS from %s: %s", url, (ex as Error)?.message || ex)
+            if ((ex as any)?.code === "ERR_BLOCKED_URL") {
+                throw new InvalidClientError(
+                    "Failed to fetch JWKS from %s. The JWKS URL must use http or https and resolve to a public address.",
+                    url
+                ).status(401)
             }
+            throw new InvalidClientError("Failed to fetch JWKS from %s.", url).status(401)
+        }
+
+        if (!res.ok) {
+            console.error("Failed to fetch JWKS from %s: %s %s", url, res.status, res.statusText)
+            throw new InvalidClientError("Failed to fetch JWKS from %s. The server responded with status %s.", url, res.status).status(401)
+        }
+
+        try {
             return await res.json();
         } catch (ex) {
-            throw new InvalidClientError("Failed to fetch JWKS from %s. %s", url, (ex as Error).message).status(401)
+            console.error("Failed to parse JWKS from %s: %s", url, (ex as Error)?.message || ex)
+            throw new InvalidClientError("Failed to fetch JWKS from %s. The response is not valid JSON.", url).status(401)
         }
     }
 

@@ -895,7 +895,7 @@ describe("token endpoint", () => {
                     client_assertion: assertion
                 })
 
-                await expectOauthError(res, 401, "invalid_client", "Failed to fetch JWKS from b. Only absolute URLs are supported")
+                await expectOauthError(res, 401, "invalid_client", "Failed to fetch JWKS from b. The JWKS URL must use http or https and resolve to a public address.")
             })
 
             it ("throws if jwks_url is not a valid URL", async () => {
@@ -936,7 +936,7 @@ describe("token endpoint", () => {
                     client_assertion: assertion
                 })
 
-                await expectOauthError(res, 401, "invalid_client", "Failed to fetch JWKS from b. Only absolute URLs are supported")
+                await expectOauthError(res, 401, "invalid_client", "Failed to fetch JWKS from b. The JWKS URL must use http or https and resolve to a public address.")
             })
 
             it ("throws if jwks string is not a valid json", async () => {
@@ -1037,12 +1037,12 @@ describe("token endpoint", () => {
 
                 it ("fails if the jwks url is not found", async () => {
                     const res = await test({ status: 404 })
-                    await expectOauthError(res, 401, "invalid_client", `Failed to fetch JWKS from ${JWKS_MOCK_SERVER.baseUrl}/jwks. 404 Not Found`)
+                    await expectOauthError(res, 401, "invalid_client", `Failed to fetch JWKS from ${JWKS_MOCK_SERVER.baseUrl}/jwks. The server responded with status 404.`)
                 })
 
                 it ("fails if the jwks url does not reply with json", async () => {
                     const res = await test({ body: "test" })
-                    await expectOauthError(res, 401, "invalid_client", /Failed to fetch JWKS from /)
+                    await expectOauthError(res, 401, "invalid_client", `Failed to fetch JWKS from ${JWKS_MOCK_SERVER.baseUrl}/jwks. The response is not valid JSON.`)
                 })
 
                 it ("fails if the fetched jwks is not an object", async () => {
@@ -1579,6 +1579,74 @@ describe("token endpoint", () => {
             })
 
             await expectOauthError(res, 401, "invalid_client", "No usable keys found")
+        })
+
+        describe("jwks_url address check (ALLOW_PRIVATE_JWKS_URLS off)", () => {
+
+            let hits = 0
+
+            beforeEach(() => {
+                config.allowPrivateJwksUrls = false
+                hits = 0
+                JWKS_MOCK_SERVER.mock("/jwks", { handler: (_req, res) => {
+                    hits++
+                    res.json({ keys: [] })
+                }})
+            })
+
+            afterEach(() => {
+                config.allowPrivateJwksUrls = true
+            })
+
+            async function requestToken(jwks_url: string) {
+                const sim: SMART.LaunchParams = {
+                    launch_type: "backend-service",
+                    jwks_url,
+                    client_id  : "whatever",
+                    scope      : "system/*.read"
+                };
+
+                const tokenUrl = getTokenURL({ sim });
+
+                const assertion = jwt.sign({
+                    iss: "whatever",
+                    sub: "whatever",
+                    aud: tokenUrl.href,
+                    jti: "random-non-reusable-jwt-id-123"
+                }, jwk2pem(PRIVATE_KEY), {
+                    expiresIn: "10m",
+                    keyid: PRIVATE_KEY.kid,
+                    header: { alg: "RS384" }
+                });
+
+                return fetchAccessToken({
+                    grant_type: "client_credentials",
+                    scope: "system/*.read",
+                    client_assertion_type: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                    client_assertion: assertion,
+                    sim
+                })
+            }
+
+            it ("refuses a jwks_url whose host resolves to loopback", async () => {
+                const jwks_url = JWKS_MOCK_SERVER.baseUrl + "/jwks"
+                const res = await requestToken(jwks_url)
+                await expectOauthError(res, 401, "invalid_client", `Failed to fetch JWKS from ${jwks_url}. The JWKS URL must use http or https and resolve to a public address.`)
+                expect(hits).to.equal(0)
+            })
+
+            it ("refuses a loopback IP literal jwks_url", async () => {
+                const jwks_url = JWKS_MOCK_SERVER.baseUrl.replace("localhost", "127.0.0.1") + "/jwks"
+                const res = await requestToken(jwks_url)
+                await expectOauthError(res, 401, "invalid_client", `Failed to fetch JWKS from ${jwks_url}. The JWKS URL must use http or https and resolve to a public address.`)
+                expect(hits).to.equal(0)
+            })
+
+            it ("refuses the cloud metadata address", async () => {
+                const jwks_url = "http://169.254.169.254/latest/meta-data/"
+                const res = await requestToken(jwks_url)
+                await expectOauthError(res, 401, "invalid_client", `Failed to fetch JWKS from ${jwks_url}. The JWKS URL must use http or https and resolve to a public address.`)
+            })
         })
 
         it ("throws if no usable keys are found at jwks", async () => {
