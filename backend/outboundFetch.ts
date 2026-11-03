@@ -105,7 +105,7 @@ function parseIPv6(address: string): number[] | null {
 /**
  * If an IPv6 address embeds an IPv4 address that a host could end up
  * connecting to (IPv4-mapped, IPv4-compatible, IPv4-translated, NAT64
- * well-known prefix, 6to4), returns that IPv4 address.
+ * well-known and local-use prefixes, 6to4), returns that IPv4 address.
  */
 function embeddedIPv4(h: number[]): string | null {
     const v4 = (hi: number, lo: number) => [hi >> 8, hi & 255, lo >> 8, lo & 255].join(".")
@@ -119,8 +119,14 @@ function embeddedIPv4(h: number[]): string | null {
     if (zeros(0, 4) && h[4] === 0xffff && h[5] === 0) {
         return v4(h[6], h[7])
     }
-    // 64:ff9b::a.b.c.d (NAT64 well-known prefix)
+    // 64:ff9b::a.b.c.d (NAT64 well-known prefix, RFC 6052)
     if (h[0] === 0x64 && h[1] === 0xff9b && zeros(2, 6)) {
+        return v4(h[6], h[7])
+    }
+    // 64:ff9b:1::/48 (NAT64 local-use prefix, RFC 8215). Translators commonly
+    // use a /96 pool inside it, which places the IPv4 address in the last 32
+    // bits whatever the bits between the /48 and the /96 are
+    if (h[0] === 0x64 && h[1] === 0xff9b && h[2] === 0x0001) {
         return v4(h[6], h[7])
     }
     // 2002:aabb:ccdd::/48 (6to4)

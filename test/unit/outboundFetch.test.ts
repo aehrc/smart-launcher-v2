@@ -55,6 +55,11 @@ describe("outboundFetch", () => {
             ["::127.0.0.1"       , "IPv4-compatible loopback"],
             ["::ffff:0:10.0.0.1" , "IPv4-translated private"],
             ["64:ff9b::a9fe:a9fe", "NAT64 cloud metadata"],
+            ["64:ff9b:1::a9fe:a9fe", "local-use NAT64 cloud metadata"],
+            ["64:ff9b:1::10.0.0.1", "local-use NAT64 private (dotted)"],
+            ["64:ff9b:1::7f00:1", "local-use NAT64 loopback"],
+            ["64:ff9b:1:abcd::c0a8:101", "local-use NAT64 /96 pool with subnet bits, private"],
+            ["64:ff9b:1:ffff:ffff:ffff:6440:1", "local-use NAT64 CGNAT (end of the /48)"],
             ["2002:7f00:1::"     , "6to4 loopback"],
             ["not-an-ip"         , "not an IP address"],
             [""                  , "empty string"],
@@ -74,6 +79,9 @@ describe("outboundFetch", () => {
             ["::ffff:8.8.8.8"         , "IPv4-mapped public"],
             ["::ffff:808:808"         , "IPv4-mapped public (hex)"],
             ["64:ff9b::808:808"       , "NAT64 public"],
+            ["64:ff9b:1::808:808"     , "local-use NAT64 public"],
+            ["64:ff9b:1:abcd::101:101", "local-use NAT64 /96 pool with subnet bits, public"],
+            ["64:ff9b:2::7f00:1"      , "outside the local-use NAT64 /48"],
             ["2002:808:808::"         , "6to4 public"],
         ]
 
@@ -110,6 +118,7 @@ describe("outboundFetch", () => {
             "http://[fd00::1]/",
             "http://[::ffff:127.0.0.1]/",
             "http://[::ffff:169.254.169.254]/",
+            "http://[64:ff9b:1::a9fe:a9fe]/",
             "http://[0:0:0:0:0:ffff:7f00:1]/",
             "http://2130706433/",          // decimal 127.0.0.1
             "http://0x7f000001/",          // hex 127.0.0.1
@@ -235,12 +244,17 @@ describe("outboundFetch", () => {
             server.close(() => done())
         })
 
+        // The integration test context turns the opt-out on for the whole
+        // run, so set it explicitly here and restore it afterwards
+        const originalAllowPrivate = config.allowPrivateJwksUrls
+
         beforeEach(() => {
             hits = []
+            config.allowPrivateJwksUrls = false
         })
 
-        afterEach(() => {
-            config.allowPrivateJwksUrls = false
+        after(() => {
+            config.allowPrivateJwksUrls = originalAllowPrivate
         })
 
         async function expectBlocked(promise: Promise<any>) {

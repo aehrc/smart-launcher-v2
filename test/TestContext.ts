@@ -45,6 +45,7 @@ export const LAUNCHER = {
 let _orig_fhirServerR2 = config.fhirServerR2
 let _orig_fhirServerR3 = config.fhirServerR3
 let _orig_fhirServerR4 = config.fhirServerR4
+let _orig_allowPrivateJwksUrls = config.allowPrivateJwksUrls
 
 before(async () => {
     await FHIR_SERVER_R2.start()
@@ -54,6 +55,8 @@ before(async () => {
     config.fhirServerR2 = FHIR_SERVER_R2.baseUrl
     config.fhirServerR3 = FHIR_SERVER_R3.baseUrl
     config.fhirServerR4 = FHIR_SERVER_R4.baseUrl
+    // The JWKS mock servers listen on localhost
+    config.allowPrivateJwksUrls = true
 });
 
 after(async () => {
@@ -64,6 +67,7 @@ after(async () => {
     config.fhirServerR2 = _orig_fhirServerR2
     config.fhirServerR3 = _orig_fhirServerR3
     config.fhirServerR4 = _orig_fhirServerR4
+    config.allowPrivateJwksUrls = _orig_allowPrivateJwksUrls
 });
 
 beforeEach(async () => {
